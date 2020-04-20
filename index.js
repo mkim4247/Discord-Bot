@@ -3,6 +3,8 @@ console.log('fuku island online!')
 const fetch = require('node-fetch')
 const fs = require('fs');
 const jsonfile = require('jsonfile');
+const cron = require('node-cron');
+
 const dotenv = require('dotenv').config();
 const token = process.env.TOKEN
 
@@ -17,6 +19,14 @@ if(fs.existsSync('stats.json')){
 
 client.on('ready', () => {
     console.log(`Logged in as ${client.user.tag}!`);
+    // secs(optional) - min - hr - day of month - month - day of wk
+    const task = cron.schedule('0 9 * * 7', () => {
+      client.channels.cache.get(channelId).send('connected')
+      console.log("Don't forget to buy turnips!");
+    }, {
+      scheduled: true
+    });
+    task.start();
 });
 
 client.on("guildMemberAdd", member => {
