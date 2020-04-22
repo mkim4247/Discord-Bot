@@ -4,6 +4,8 @@ const fetch = require('node-fetch')
 const fs = require('fs');
 const jsonfile = require('jsonfile');
 const cron = require('node-cron');
+const dialogflow = require('dialogflow');
+const uuid = require('uuid');
 
 const dotenv = require('dotenv').config();
 const token = process.env.TOKEN
@@ -28,6 +30,45 @@ client.on('ready', () => {
     });
     task.start();
 });
+
+const projectId = 'small-talk-yofikt'
+
+async function runSample(projectId = 'mall-talk-yofikt') {
+  // A unique identifier for the given session
+  const sessionId = uuid.v4();
+
+  // Create a new session
+  const sessionClient = new dialogflow.SessionsClient();
+  const sessionPath = sessionClient.sessionPath(projectId, sessionId);
+
+  // The text query request.
+  const request = {
+    session: sessionPath,
+    queryInput: {
+      text: {
+        // The query to send to the dialogflow agent
+        text: 'hello',
+        // The language used by the client (en-US)
+        languageCode: 'en-US',
+      },
+    },
+  };
+
+  // Send request and log result
+  const responses = await sessionClient.detectIntent(request);
+  console.log('Detected intent');
+  const result = responses[0].queryResult;
+  console.log(`  Query: ${result.queryText}`);
+  console.log(`  Response: ${result.fulfillmentText}`);
+  if (result.intent) {
+    console.log(`  Intent: ${result.intent.displayName}`);
+  } else {
+    console.log(`  No intent matched.`);
+  }
+}
+
+
+
 
 client.on("guildMemberAdd", member => {
   console.log(`New User: "${member.user.username}" has joined "${member.guild.name}"`);
