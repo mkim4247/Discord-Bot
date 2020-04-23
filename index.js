@@ -31,42 +31,78 @@ client.on('ready', () => {
     task.start();
 });
 
-const projectId = 'small-talk-yofikt'
+const projectId = 'small-talk-yofikt';
+const sessionId = uuid.v4();
+const languageCode = 'en';
+const queries = [
+  'Reserve a meeting room in Toronto office, there will be 5 of us',
+  'Next monday at 3pm for 1 hour, please', // Tell the bot when the meeting is taking place
+  'B'  // Rooms are defined on the Dialogflow agent, default options are A, B, or C
+]
 
-async function runSample(projectId = 'mall-talk-yofikt') {
-  // A unique identifier for the given session
-  const sessionId = uuid.v4();
+// Instantiates a session client
+const sessionClient = new dialogflow.SessionsClient();
 
-  // Create a new session
-  const sessionClient = new dialogflow.SessionsClient();
-  const sessionPath = sessionClient.sessionPath(projectId, sessionId);
+async function detectIntent(
+  projectId,
+  sessionId,
+  query,
+  contexts,
+  languageCode
+) {
+  // The path to identify the agent that owns the created intent.
+  const sessionPath = sessionClient.sessionPath(
+    projectId,
+    sessionId
+  );
 
   // The text query request.
   const request = {
     session: sessionPath,
     queryInput: {
       text: {
-        // The query to send to the dialogflow agent
-        text: 'hello',
-        // The language used by the client (en-US)
-        languageCode: 'en-US',
+        text: query,
+        languageCode: languageCode,
       },
     },
   };
 
-  // Send request and log result
-  const responses = await sessionClient.detectIntent(request);
-  console.log('Detected intent');
-  const result = responses[0].queryResult;
-  console.log(`  Query: ${result.queryText}`);
-  console.log(`  Response: ${result.fulfillmentText}`);
-  if (result.intent) {
-    console.log(`  Intent: ${result.intent.displayName}`);
-  } else {
-    console.log(`  No intent matched.`);
+  if (contexts && contexts.length > 0) {
+    request.queryParams = {
+      contexts: contexts,
+    };
   }
+
+  const responses = await sessionClient.detectIntent(request);
+  return responses[0];
 }
 
+async function executeQueries(projectId, sessionId, queries, languageCode) {
+  // Keeping the context across queries let's us simulate an ongoing conversation with the bot
+  let context;
+  let intentResponse;
+  for (const query of queries) {
+    try {
+      console.log(`Sending Query: ${query}`);
+      intentResponse = await detectIntent(
+        projectId,
+        sessionId,
+        query,
+        context,
+        languageCode
+      );
+      console.log('Detected intent');
+      console.log(
+        `Fulfillment Text: ${intentResponse.queryResult.fulfillmentText}`
+      );
+      // Use the context from this response for next queries
+      context = intentResponse.queryResult.outputContexts;
+    } catch (error) {
+      console.log(error);
+    }
+  }
+}
+executeQueries(projectId, sessionId, queries, languageCode);
 
 
 
@@ -82,6 +118,12 @@ client.on('message', msg => {
   }
 
   let [command, ...parts] = msg.content.split(' ');
+
+  if(command === 'test'){
+    runSample()
+  }
+
+
   if(command === '!dad'){
     fetch('https://icanhazdadjoke.com/', {
       method: "GET",
