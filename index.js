@@ -31,7 +31,6 @@ client.on('ready', () => {
     task.start();
 });
 
-const projectId = 'small-talk-yofikt';
 const sessionId = uuid.v4();
 const languageCode = 'en';
 const queries = [
