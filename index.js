@@ -22,7 +22,7 @@ if(fs.existsSync('stats.json')){
 client.on('ready', () => {
     console.log(`Logged in as ${client.user.tag}!`);
     // secs(optional) - min - hr - day of month - month - day of wk
-    const task = cron.schedule('0 9 * * 7', () => {
+    const task = cron.schedule('0 9 * * Sunday', () => {
       client.channels.cache.get(channelId).send('connected')
       console.log("Don't forget to buy turnips!");
     }, {
